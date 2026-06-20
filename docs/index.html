@@ -5,18 +5,238 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Site-Ops Dashboard</title>
 <style>
-  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --blue: #58a6ff; }
-  body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-  .msg { text-align: center; }
-  .msg h1 { margin-bottom: 16px; }
-  .msg a { color: var(--blue); }
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+  .header { text-align: center; margin-bottom: 30px; }
+  .header h1 { font-size: 1.8em; margin-bottom: 8px; }
+  .header .time { color: #8b949e; font-size: 0.9em; }
+  .summary { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .summary .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 24px; text-align: center; min-width: 120px; }
+  .summary .card .num { font-size: 2em; font-weight: bold; }
+  .summary .card .label { color: #8b949e; font-size: 0.85em; margin-top: 4px; }
+  .card .num.green { color: var(--green); }
+  .card .num.red { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; }
+  th { background: #21262d; padding: 12px 16px; text-align: left; font-size: 0.85em; color: #8b949e; text-transform: uppercase; }
+  td { padding: 10px 16px; border-top: 1px solid var(--border); }
+  tr:hover { background: #1c2128; }
+  tr.fail-row { background: rgba(248,81,73,0.1); }
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.85em; }
+  .badge.ok { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge.fail { background: rgba(248,81,73,0.15); color: var(--red); }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .actions { text-align: center; margin-top: 24px; }
+  .actions a { display: inline-block; background: #238636; color: white; padding: 10px 24px; border-radius: 6px; margin: 6px; font-weight: 500; }
+  .actions a:hover { background: #2ea043; text-decoration: none; }
+  small { color: #8b949e; }
 </style>
 </head>
 <body>
-  <div class="msg">
+  <div class="header">
     <h1>🛰️ Site-Ops Dashboard</h1>
-    <p>初回ヘルスチェック実行後に自動更新されます</p>
-    <p><a href="https://github.com/jpn-x/site-ops/actions/workflows/health-check.yml">ヘルスチェックを実行する →</a></p>
+    <div class="time">最終チェック: 2026-06-20 11:58 JST</div>
+  </div>
+
+  <div class="summary">
+    <div class="card"><div class="num">20</div><div class="label">Total Sites</div></div>
+    <div class="card"><div class="num green">18</div><div class="label">正常</div></div>
+    <div class="card"><div class="num red">2</div><div class="label">エラー</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>サイト名</th><th>ステータス</th><th>リンク</th><th>自動更新</th><th>リポジトリ</th><th>カテゴリ</th></tr>
+    </thead>
+    <tbody>
+      
+        <tr class="">
+          <td>日証金ダイジェスト</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/taisyaku-news/" target="_blank">🔗 開く</a></td>
+          <td>✅ success <small>2026-06-19 13:51</small></td>
+          <td><a href="https://github.com/jpn-x/taisyaku-news" target="_blank">jpn-x/taisyaku-news</a></td>
+          <td>data</td>
+        </tr>
+
+        <tr class="">
+          <td>ストップ高・安一覧</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://stopstock.github.io/stop-data/" target="_blank">🔗 開く</a></td>
+          <td>✅ success <small>2026-06-19 11:40</small></td>
+          <td><a href="https://github.com/stopstock/stop-data" target="_blank">stopstock/stop-data</a></td>
+          <td>data</td>
+        </tr>
+
+        <tr class="">
+          <td>X 高度検索ツール</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://x-post-tools.github.io/x-search/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/x-post-tools/x-search" target="_blank">x-post-tools/x-search</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>株クラ X Network</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://kabukura-chain.github.io/network/index.html" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/kabukura-chain/network" target="_blank">kabukura-chain/network</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>TDnet Web</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/tdnet-web/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/tdnet-web" target="_blank">jpn-x/tdnet-web</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>ストップ高ギャップ分析</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/stop-gap-analysis/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/stop-gap-analysis" target="_blank">jpn-x/stop-gap-analysis</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>TSE Watch</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://cadillac600.github.io/tse-watch/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/cadillac600/tse-watch" target="_blank">cadillac600/tse-watch</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="fail-row">
+          <td>JRE 車両管理</td>
+          <td><span class="badge fail">❌ 404</span></td>
+          <td><a href="https://jpn-x.github.io/jre-vehicle-management/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/jre-vehicle-management" target="_blank">jpn-x/jre-vehicle-management</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="fail-row">
+          <td>車保険ダッシュボード</td>
+          <td><span class="badge fail">❌ 404</span></td>
+          <td><a href="https://jpn-x.github.io/car-insurance-dashboard/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/car-insurance-dashboard" target="_blank">jpn-x/car-insurance-dashboard</a></td>
+          <td>dashboard</td>
+        </tr>
+
+        <tr class="">
+          <td>Fund Board</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/fund-board/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/fund-board" target="_blank">jpn-x/fund-board</a></td>
+          <td>dashboard</td>
+        </tr>
+
+        <tr class="">
+          <td>Family Board</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/family-board/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/family-board" target="_blank">jpn-x/family-board</a></td>
+          <td>dashboard</td>
+        </tr>
+
+        <tr class="">
+          <td>株スクリーナー</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/kabu-screener/desktop.html" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/kabu-screener" target="_blank">jpn-x/kabu-screener</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>株ストップ</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/kabu-stop/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/kabu-stop" target="_blank">jpn-x/kabu-stop</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>Holdings Radar</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/holdings-radar/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/holdings-radar" target="_blank">jpn-x/holdings-radar</a></td>
+          <td>dashboard</td>
+        </tr>
+
+        <tr class="">
+          <td>Kabu Tracker</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/kabu-tracker/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/kabu-tracker" target="_blank">jpn-x/kabu-tracker</a></td>
+          <td>dashboard</td>
+        </tr>
+
+        <tr class="">
+          <td>Kabu Watch</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/kabu-watch/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/kabu-watch" target="_blank">jpn-x/kabu-watch</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>IPOロックアップ解除レーダー</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/ipo-lockup-radar/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/ipo-lockup-radar" target="_blank">jpn-x/ipo-lockup-radar</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>ワラント・レーダー</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/warrant-radar/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/warrant-radar" target="_blank">jpn-x/warrant-radar</a></td>
+          <td>tool</td>
+        </tr>
+
+        <tr class="">
+          <td>My Works</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/my-works/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/my-works" target="_blank">jpn-x/my-works</a></td>
+          <td>portal</td>
+        </tr>
+
+        <tr class="">
+          <td>Tool Directory</td>
+          <td><span class="badge ok">✅ 200</span></td>
+          <td><a href="https://jpn-x.github.io/tool-directory/" target="_blank">🔗 開く</a></td>
+          <td></td>
+          <td><a href="https://github.com/jpn-x/tool-directory" target="_blank">jpn-x/tool-directory</a></td>
+          <td>portal</td>
+        </tr>
+    </tbody>
+  </table>
+
+  <div class="actions">
+    <a href="https://github.com/jpn-x/site-ops/actions/workflows/health-check.yml">🔄 ヘルスチェック実行</a>
+    <a href="https://github.com/jpn-x/site-ops/actions/workflows/trigger-update.yml">🚀 更新トリガー</a>
+    <a href="https://github.com/jpn-x/site-ops/actions/workflows/auto-fix.yml">🔧 修正実行</a>
   </div>
 </body>
 </html>
