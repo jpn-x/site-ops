@@ -1,0 +1,91 @@
+name: Trigger Site Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '更新対象'
+        required: true
+        type: choice
+        options:
+          - all
+          - taisyaku-news
+          - stop-data
+      retry_on_fail:
+        description: '失敗時に自動リトライ'
+        type: boolean
+        default: true
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo
+      GH_TOKEN: ${{ secrets.OPS_TOKEN }}
+
+    strategy:
+      matrix:
+        include:
+          - name: taisyaku-news
+            repo: jpn-x/taisyaku-news
+            workflow: update.yml
+          - name: stop-data
+            repo: stopstock/stop-data
+            workflow: update.yml
+
+    steps:
+      - name: Skip if not targeted
+        if: github.event.inputs.target != 'all' && github.event.inputs.target != matrix.name
+        run: echo "Skipping ${{ matrix.name }}" && exit 0
+
+      - name: Trigger update workflow
+        if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.name
+        run: |
+          echo "🚀 Triggering ${{ matrix.name }}..."
+          gh workflow run ${{ matrix.workflow }} --repo ${{ matrix.repo }}
+
+      - name: Wait and verify
+        if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.name
+        run: |
+          sleep 30
+          for i in $(seq 1 20); do
+            status=$(gh api "repos/${{ matrix.repo }}/actions/workflows/${{ matrix.workflow }}/runs?per_page=1" \
+              --jq '.workflow_runs[0].status' 2>/dev/null)
+
+            if [ "$status" = "completed" ]; then
+              conclusion=$(gh api "repos/${{ matrix.repo }}/actions/workflows/${{ matrix.workflow }}/runs?per_page=1" \
+                --jq '.workflow_runs[0].conclusion' 2>/dev/null)
+
+              if [ "$conclusion" = "success" ]; then
+                echo "✅ ${{ matrix.name }} updated successfully"
+                exit 0
+              else
+                echo "❌ ${{ matrix.name }} failed: $conclusion"
+                if [ "${{ github.event.inputs.retry_on_fail }}" = "true" ]; then
+                  echo "🔄 Retrying..."
+                  gh workflow run ${{ matrix.workflow }} --repo ${{ matrix.repo }}
+                  sleep 60
+                  continue
+                fi
+                exit 1
+              fi
+            fi
+            echo "⏳ Waiting... ($i/20)"
+            sleep 30
+          done
+          echo "⏱️ Timeout waiting for ${{ matrix.name }}"
+          exit 1
+
+      - name: Verify site is live
+        if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.name
+        run: |
+          sleep 60
+          url=$(jq -r --arg name "${{ matrix.name }}" '.sites[] | select(.repo | endswith($name)) | .url' sites.json 2>/dev/null || echo "")
+          if [ -n "$url" ]; then
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$url")
+            if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+              echo "✅ Site live: $url (HTTP $status)"
+            else
+              echo "⚠️ Site may have issues: $url (HTTP $status)"
+            fi
+          fi

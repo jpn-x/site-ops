@@ -1,0 +1,144 @@
+{
+  "sites": [
+    {
+      "name": "日証金ダイジェスト",
+      "url": "https://jpn-x.github.io/taisyaku-news/",
+      "repo": "jpn-x/taisyaku-news",
+      "auto_update": true,
+      "category": "data"
+    },
+    {
+      "name": "ストップ高・安一覧",
+      "url": "https://stopstock.github.io/stop-data/",
+      "repo": "stopstock/stop-data",
+      "auto_update": true,
+      "category": "data"
+    },
+    {
+      "name": "X 高度検索ツール",
+      "url": "https://x-post-tools.github.io/x-search/",
+      "repo": "x-post-tools/x-search",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "株クラ X Network",
+      "url": "https://kabukura-chain.github.io/network/index.html",
+      "repo": "kabukura-chain/network",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "TDnet Web",
+      "url": "https://jpn-x.github.io/tdnet-web/",
+      "repo": "jpn-x/tdnet-web",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "ストップ高ギャップ分析",
+      "url": "https://jpn-x.github.io/stop-gap-analysis/",
+      "repo": "jpn-x/stop-gap-analysis",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "TSE Watch",
+      "url": "https://cadillac600.github.io/tse-watch/",
+      "repo": "cadillac600/tse-watch",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "JRE 車両管理",
+      "url": "https://jpn-x.github.io/jre-vehicle-management/",
+      "repo": "jpn-x/jre-vehicle-management",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "車保険ダッシュボード",
+      "url": "https://jpn-x.github.io/car-insurance-dashboard/",
+      "repo": "jpn-x/car-insurance-dashboard",
+      "auto_update": false,
+      "category": "dashboard"
+    },
+    {
+      "name": "Fund Board",
+      "url": "https://jpn-x.github.io/fund-board/",
+      "repo": "jpn-x/fund-board",
+      "auto_update": false,
+      "category": "dashboard"
+    },
+    {
+      "name": "Family Board",
+      "url": "https://jpn-x.github.io/family-board/",
+      "repo": "jpn-x/family-board",
+      "auto_update": false,
+      "category": "dashboard"
+    },
+    {
+      "name": "株スクリーナー",
+      "url": "https://jpn-x.github.io/kabu-screener/desktop.html",
+      "repo": "jpn-x/kabu-screener",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "株ストップ",
+      "url": "https://jpn-x.github.io/kabu-stop/",
+      "repo": "jpn-x/kabu-stop",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "Holdings Radar",
+      "url": "https://jpn-x.github.io/holdings-radar/",
+      "repo": "jpn-x/holdings-radar",
+      "auto_update": false,
+      "category": "dashboard"
+    },
+    {
+      "name": "Kabu Tracker",
+      "url": "https://jpn-x.github.io/kabu-tracker/",
+      "repo": "jpn-x/kabu-tracker",
+      "auto_update": false,
+      "category": "dashboard"
+    },
+    {
+      "name": "Kabu Watch",
+      "url": "https://jpn-x.github.io/kabu-watch/",
+      "repo": "jpn-x/kabu-watch",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "IPOロックアップ解除レーダー",
+      "url": "https://jpn-x.github.io/ipo-lockup-radar/",
+      "repo": "jpn-x/ipo-lockup-radar",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "ワラント・レーダー",
+      "url": "https://jpn-x.github.io/warrant-radar/",
+      "repo": "jpn-x/warrant-radar",
+      "auto_update": false,
+      "category": "tool"
+    },
+    {
+      "name": "My Works",
+      "url": "https://jpn-x.github.io/my-works/",
+      "repo": "jpn-x/my-works",
+      "auto_update": false,
+      "category": "portal"
+    },
+    {
+      "name": "Tool Directory",
+      "url": "https://jpn-x.github.io/tool-directory/",
+      "repo": "jpn-x/tool-directory",
+      "auto_update": false,
+      "category": "portal"
+    }
+  ]
+}

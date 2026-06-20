@@ -1,0 +1,161 @@
+name: Site Health Check
+
+on:
+  schedule:
+    # 毎日 JST 8:00 (UTC 23:00 前日) と JST 20:00 (UTC 11:00)
+    - cron: '0 23 * * *'
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+    inputs:
+      notify_on_success:
+        description: '全サイト正常でも通知する'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run health checks
+        id: check
+        run: |
+          echo "## Site Health Report - $(date '+%Y-%m-%d %H:%M JST')" > report.md
+          echo "" >> report.md
+
+          TOTAL=0
+          OK=0
+          FAIL=0
+          FAILURES=""
+
+          while IFS= read -r site; do
+            name=$(echo "$site" | jq -r '.name')
+            url=$(echo "$site" | jq -r '.url')
+            TOTAL=$((TOTAL + 1))
+
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$url" 2>/dev/null || echo "000")
+
+            if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+              echo "| ✅ | $name | $status |" >> report.md
+              OK=$((OK + 1))
+            else
+              echo "| ❌ | $name | $status |" >> report.md
+              FAIL=$((FAIL + 1))
+              FAILURES="${FAILURES}❌ ${name} (HTTP ${status})\n"
+            fi
+          done < <(jq -c '.sites[]' sites.json)
+
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "ok=$OK" >> $GITHUB_OUTPUT
+          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+
+          if [ $FAIL -gt 0 ]; then
+            echo "has_failures=true" >> $GITHUB_OUTPUT
+            {
+              echo 'failures<<EOF'
+              echo -e "$FAILURES"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          else
+            echo "has_failures=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check auto-update workflow status
+        id: update_check
+        run: |
+          UPDATE_ISSUES=""
+
+          while IFS= read -r site; do
+            name=$(echo "$site" | jq -r '.name')
+            repo=$(echo "$site" | jq -r '.repo')
+            auto=$(echo "$site" | jq -r '.auto_update')
+
+            if [ "$auto" = "true" ]; then
+              last_run=$(gh api "repos/${repo}/actions/workflows/update.yml/runs?per_page=1&status=completed" \
+                --jq '.workflow_runs[0] | "\(.conclusion) \(.updated_at)"' 2>/dev/null || echo "unknown")
+
+              conclusion=$(echo "$last_run" | awk '{print $1}')
+              run_date=$(echo "$last_run" | awk '{print $2}')
+
+              if [ "$conclusion" != "success" ]; then
+                UPDATE_ISSUES="${UPDATE_ISSUES}⚠️ ${name}: 最終更新 ${conclusion} (${run_date})\n"
+              fi
+            fi
+          done < <(jq -c '.sites[]' sites.json)
+
+          if [ -n "$UPDATE_ISSUES" ]; then
+            echo "has_update_issues=true" >> $GITHUB_OUTPUT
+            {
+              echo 'update_issues<<EOF'
+              echo -e "$UPDATE_ISSUES"
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          else
+            echo "has_update_issues=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.OPS_TOKEN }}
+
+      - name: Update dashboard
+        run: |
+          python scripts/build_dashboard.py
+
+      - name: Commit dashboard
+        run: |
+          git config user.name "site-ops[bot]"
+          git config user.email "site-ops[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --staged --quiet || git commit -m "update dashboard $(date '+%Y-%m-%d %H:%M')"
+          git push
+
+      - name: Send email notification (failures)
+        if: steps.check.outputs.has_failures == 'true' || steps.update_check.outputs.has_update_issues == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "🚨 Site-Ops: ${{ steps.check.outputs.fail }}件のエラー検出"
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          from: "Site-Ops <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            Site Health Report - ${{ github.event.repository.name }}
+
+            ■ ヘルスチェック: ${{ steps.check.outputs.ok }}/${{ steps.check.outputs.total }} OK
+
+            ${{ steps.check.outputs.failures }}
+
+            ${{ steps.update_check.outputs.update_issues }}
+
+            ■ ダッシュボード: https://jpn-x.github.io/site-ops/
+            ■ 手動トリガー: https://github.com/jpn-x/site-ops/actions
+
+      - name: Send email notification (all OK)
+        if: |
+          steps.check.outputs.has_failures == 'false' &&
+          steps.update_check.outputs.has_update_issues == 'false' &&
+          github.event.inputs.notify_on_success == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ Site-Ops: 全サイト正常稼働中"
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          from: "Site-Ops <${{ secrets.MAIL_USERNAME }}>"
+          body: |
+            全 ${{ steps.check.outputs.total }} サイト正常稼働中
+
+            ■ ダッシュボード: https://jpn-x.github.io/site-ops/

@@ -1,0 +1,83 @@
+name: Auto Fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: '修正対象リポジトリ (例: jpn-x/taisyaku-news)'
+        required: true
+        type: string
+      fix_type:
+        description: '修正タイプ'
+        required: true
+        type: choice
+        options:
+          - re-trigger-update
+          - re-deploy-pages
+          - clear-cache-redeploy
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.OPS_TOKEN }}
+      TZ: Asia/Tokyo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Re-trigger update workflow
+        if: inputs.fix_type == 're-trigger-update'
+        run: |
+          echo "🔄 Re-triggering update for ${{ inputs.target_repo }}..."
+          gh workflow run update.yml --repo ${{ inputs.target_repo }}
+          echo "✅ Triggered. Check: https://github.com/${{ inputs.target_repo }}/actions"
+
+      - name: Re-deploy Pages
+        if: inputs.fix_type == 're-deploy-pages'
+        run: |
+          echo "🔄 Re-deploying Pages for ${{ inputs.target_repo }}..."
+          # 空コミットでPages再デプロイをトリガー
+          TMPDIR=$(mktemp -d)
+          cd "$TMPDIR"
+          gh repo clone ${{ inputs.target_repo }} repo -- --depth 1
+          cd repo
+          git config user.name "site-ops[bot]"
+          git config user.email "site-ops[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: re-deploy pages via site-ops"
+          git push
+          echo "✅ Empty commit pushed to trigger Pages rebuild"
+
+      - name: Clear cache and redeploy
+        if: inputs.fix_type == 'clear-cache-redeploy'
+        run: |
+          echo "🧹 Clearing caches for ${{ inputs.target_repo }}..."
+          # GitHub Actions キャッシュ削除
+          gh api "repos/${{ inputs.target_repo }}/actions/caches" --jq '.actions_caches[].id' | \
+            xargs -I{} gh api -X DELETE "repos/${{ inputs.target_repo }}/actions/caches/{}" 2>/dev/null || true
+
+          # Pages再デプロイ
+          TMPDIR=$(mktemp -d)
+          cd "$TMPDIR"
+          gh repo clone ${{ inputs.target_repo }} repo -- --depth 1
+          cd repo
+          git config user.name "site-ops[bot]"
+          git config user.email "site-ops[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: clear cache and redeploy via site-ops"
+          git push
+          echo "✅ Cache cleared and redeploy triggered"
+
+      - name: Post-fix verification
+        run: |
+          sleep 120
+          # sites.jsonからURLを取得
+          url=$(jq -r --arg repo "${{ inputs.target_repo }}" '.sites[] | select(.repo == $repo) | .url' sites.json 2>/dev/null)
+          if [ -n "$url" ]; then
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$url")
+            echo "🔍 Post-fix check: $url → HTTP $status"
+            if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+              echo "✅ サイト復旧確認"
+            else
+              echo "⚠️ まだ問題あり。手動確認が必要です。"
+            fi
+          fi

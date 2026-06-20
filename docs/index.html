@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site-Ops Dashboard</title>
+<style>
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --blue: #58a6ff; }
+  body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .msg { text-align: center; }
+  .msg h1 { margin-bottom: 16px; }
+  .msg a { color: var(--blue); }
+</style>
+</head>
+<body>
+  <div class="msg">
+    <h1>🛰️ Site-Ops Dashboard</h1>
+    <p>初回ヘルスチェック実行後に自動更新されます</p>
+    <p><a href="https://github.com/jpn-x/site-ops/actions/workflows/health-check.yml">ヘルスチェックを実行する →</a></p>
+  </div>
+</body>
+</html>
