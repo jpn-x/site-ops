@@ -14,13 +14,14 @@ on:
 
 permissions:
   contents: write
-  pages: write
+  issues: write
 
 jobs:
   health-check:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Tokyo
+      GH_TOKEN: ${{ secrets.OPS_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -28,13 +29,11 @@ jobs:
       - name: Run health checks
         id: check
         run: |
-          echo "## Site Health Report - $(date '+%Y-%m-%d %H:%M JST')" > report.md
-          echo "" >> report.md
-
           TOTAL=0
           OK=0
           FAIL=0
           FAILURES=""
+          REPORT_TABLE="| 状態 | サイト名 | HTTP |\n|------|---------|------|\n"
 
           while IFS= read -r site; do
             name=$(echo "$site" | jq -r '.name')
@@ -44,18 +43,24 @@ jobs:
             status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$url" 2>/dev/null || echo "000")
 
             if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
-              echo "| ✅ | $name | $status |" >> report.md
+              REPORT_TABLE="${REPORT_TABLE}| ✅ | ${name} | ${status} |\n"
               OK=$((OK + 1))
             else
-              echo "| ❌ | $name | $status |" >> report.md
+              REPORT_TABLE="${REPORT_TABLE}| ❌ | ${name} | ${status} |\n"
               FAIL=$((FAIL + 1))
-              FAILURES="${FAILURES}❌ ${name} (HTTP ${status})\n"
+              FAILURES="${FAILURES}- ❌ **${name}** → HTTP ${status}\n"
             fi
           done < <(jq -c '.sites[]' sites.json)
 
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "ok=$OK" >> $GITHUB_OUTPUT
           echo "fail=$FAIL" >> $GITHUB_OUTPUT
+
+          {
+            echo 'report_table<<EOF'
+            echo -e "$REPORT_TABLE"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
 
           if [ $FAIL -gt 0 ]; then
             echo "has_failures=true" >> $GITHUB_OUTPUT
@@ -86,7 +91,7 @@ jobs:
               run_date=$(echo "$last_run" | awk '{print $2}')
 
               if [ "$conclusion" != "success" ]; then
-                UPDATE_ISSUES="${UPDATE_ISSUES}⚠️ ${name}: 最終更新 ${conclusion} (${run_date})\n"
+                UPDATE_ISSUES="${UPDATE_ISSUES}- ⚠️ **${name}**: 最終更新 \`${conclusion}\` (${run_date})\n"
               fi
             fi
           done < <(jq -c '.sites[]' sites.json)
@@ -101,12 +106,14 @@ jobs:
           else
             echo "has_update_issues=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          GH_TOKEN: ${{ secrets.OPS_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Update dashboard
-        run: |
-          python scripts/build_dashboard.py
+        run: python scripts/build_dashboard.py
 
       - name: Commit dashboard
         run: |
@@ -116,46 +123,51 @@ jobs:
           git diff --staged --quiet || git commit -m "update dashboard $(date '+%Y-%m-%d %H:%M')"
           git push
 
-      - name: Send email notification (failures)
+      - name: Create/update issue on failure
         if: steps.check.outputs.has_failures == 'true' || steps.update_check.outputs.has_update_issues == 'true'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "🚨 Site-Ops: ${{ steps.check.outputs.fail }}件のエラー検出"
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: "Site-Ops <${{ secrets.MAIL_USERNAME }}>"
-          body: |
-            Site Health Report - ${{ github.event.repository.name }}
+        run: |
+          TITLE="🚨 Site-Ops Alert: ${{ steps.check.outputs.fail }}件エラー $(date '+%m/%d %H:%M')"
+          BODY=$(cat <<'BODYEOF'
+          ## 🚨 ヘルスチェック結果
 
-            ■ ヘルスチェック: ${{ steps.check.outputs.ok }}/${{ steps.check.outputs.total }} OK
+          **${{ steps.check.outputs.ok }} / ${{ steps.check.outputs.total }}** サイト正常
 
-            ${{ steps.check.outputs.failures }}
+          ### エラー検出
+          ${{ steps.check.outputs.failures }}
 
-            ${{ steps.update_check.outputs.update_issues }}
+          ${{ steps.update_check.outputs.update_issues }}
 
-            ■ ダッシュボード: https://jpn-x.github.io/site-ops/
-            ■ 手動トリガー: https://github.com/jpn-x/site-ops/actions
+          ### 全サイト一覧
+          ${{ steps.check.outputs.report_table }}
 
-      - name: Send email notification (all OK)
+          ---
+          📊 [ダッシュボード](https://jpn-x.github.io/site-ops/) | 🔧 [修正実行](https://github.com/jpn-x/site-ops/actions/workflows/auto-fix.yml) | 🚀 [更新トリガー](https://github.com/jpn-x/site-ops/actions/workflows/trigger-update.yml)
+          BODYEOF
+          )
+
+          # 既存の未解決alertがあれば閉じて新規作成
+          existing=$(gh issue list --label "alert" --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "新しいチェック結果で置き換え" 2>/dev/null || true
+          fi
+
+          gh issue create --title "$TITLE" --body "$BODY" --label "alert"
+
+      - name: Close alert issues if all OK
+        if: steps.check.outputs.has_failures == 'false' && steps.update_check.outputs.has_update_issues == 'false'
+        run: |
+          existing=$(gh issue list --label "alert" --state open --json number --jq '.[].number' 2>/dev/null || echo "")
+          for num in $existing; do
+            gh issue close "$num" --comment "✅ 全サイト正常確認 $(date '+%Y-%m-%d %H:%M JST')" 2>/dev/null || true
+          done
+
+      - name: Success notification issue (if requested)
         if: |
           steps.check.outputs.has_failures == 'false' &&
           steps.update_check.outputs.has_update_issues == 'false' &&
           github.event.inputs.notify_on_success == 'true'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ Site-Ops: 全サイト正常稼働中"
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: "Site-Ops <${{ secrets.MAIL_USERNAME }}>"
-          body: |
-            全 ${{ steps.check.outputs.total }} サイト正常稼働中
-
-            ■ ダッシュボード: https://jpn-x.github.io/site-ops/
+        run: |
+          gh issue create \
+            --title "✅ 全サイト正常 $(date '+%m/%d %H:%M')" \
+            --body "全 ${{ steps.check.outputs.total }} サイト正常稼働中 🎉\n\n📊 [ダッシュボード](https://jpn-x.github.io/site-ops/)" \
+            --label "report"
