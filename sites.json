@@ -23,7 +23,7 @@
     },
     {
       "name": "株クラ X Network",
-      "url": "https://kabukura-chain.github.io/network/index.html",
+      "url": "https://kabukura-network.pages.dev",
       "repo": "kabukura-chain/network",
       "auto_update": false,
       "category": "tool"
@@ -51,14 +51,14 @@
     },
     {
       "name": "JRE 車両管理",
-      "url": "https://jpn-x.github.io/jre-vehicle-management/",
+      "url": "https://jre-vehicle-wdh0qy1o.cadillac600.workers.dev",
       "repo": "jpn-x/jre-vehicle-management",
       "auto_update": false,
       "category": "tool"
     },
     {
       "name": "車保険ダッシュボード",
-      "url": "https://jpn-x.github.io/car-insurance-dashboard/",
+      "url": "https://car-insurance-kf32up0z.pages.dev",
       "repo": "jpn-x/car-insurance-dashboard",
       "auto_update": false,
       "category": "dashboard"
@@ -100,7 +100,7 @@
     },
     {
       "name": "Kabu Tracker",
-      "url": "https://jpn-x.github.io/kabu-tracker/",
+      "url": "https://kabu-tracker-7sm8dw03.cadillac600.workers.dev",
       "repo": "jpn-x/kabu-tracker",
       "auto_update": false,
       "category": "dashboard"
@@ -128,7 +128,7 @@
     },
     {
       "name": "My Works",
-      "url": "https://jpn-x.github.io/my-works/",
+      "url": "https://my-works-cqr.pages.dev",
       "repo": "jpn-x/my-works",
       "auto_update": false,
       "category": "portal"
