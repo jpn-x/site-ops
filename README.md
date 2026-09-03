@@ -1,5 +1,12 @@
 # 🛰️ site-ops — リモート管制システム
 
+> **2026-09-03: サイト一覧・死活監視の定期実行は [jpn-x/fleet-command](https://github.com/jpn-x/fleet-command) に統合。**
+> `health-check.yml` のcronは停止済み（`sites.json`がfleet-hqのURL一覧と乖離し
+> 二重管理になっていたため）。サイトの真のURL/repo一覧は今後
+> `jpn-x/fleet-command/registry.json` を参照すること。`sites.json`はこのリポジトリの
+> Auto Fix / Trigger Site Update ワークフローがまだ参照しているため残置。
+> `workflow_dispatch`での手動実行は引き続き可能。
+
 全20サイトの死活監視・自動更新・自動修正を GitHub Actions で実行。
 ブラウザだけで出張先から全操作可能。ローカルPC不要。
 
